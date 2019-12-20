@@ -83,7 +83,7 @@ def test():
     
     monolog = ('\tTesting Step 2. -quantify command caluclates feature weights of known uORFs.\n')
     print(monolog)    
-    bashCommand = ('python uorfseqr.py -quantify -o scer.demo -genome_name s_cerervisiae -samples Scer_A data/bam/Scer_A_RPF_10.bam data/bam/Scer_A_mRNA_10.bam Scer_B data/bam/Scer_B_RPF_10.bam data/bam/Scer_B_mRNA_10.bam Scer_C data/bam/Scer_C_RPF_10.bam data/bam/Scer_C_mRNA_10.bam')
+    bashCommand = ('python uorfseqr.py -quantify -o scer.demo -genome_name s_cerervisiae -samples ../Scer_A data/bam/Scer_A_RPF_10.bam ../data/bam/Scer_A_mRNA_10.bam ../Scer_B data/bam/Scer_B_RPF_10.bam ../data/bam/Scer_B_mRNA_10.bam ../Scer_C data/bam/Scer_C_RPF_10.bam ../data/bam/Scer_C_mRNA_10.bam')
     print(bashCommand)
     output_handler(subprocess.check_output([bashCommand],stderr=subprocess.STDOUT,shell=True))
     
