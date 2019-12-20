@@ -108,7 +108,7 @@ parser.add_argument('-fa',"--fa_file")
 #handle quantify task
 parser.add_argument('-quantify',"--quantify_features", action='store_true')
 parser.add_argument('-gff',"--gff_file")
-parser.add_argument('-filter',"--filter_uorfs, nargs='+')
+parser.add_argument('-filter',"--filter_uorfs', nargs='+')
 parser.add_argument('-known',"--known_uorfs")
 parser.add_argument('-samples', '--sample_list', nargs='+')
 parser.add_argument('-max_rpf','--max_rpf_size')
