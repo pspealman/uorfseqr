@@ -579,7 +579,7 @@ if args.quantify_features:
     outline = ('Computing features on {}...').format(outdir_name)
     print(outline)
     #sudo
-    bash_command = ('python newcompute_features.py')
+    bash_command = ('python ../analysis/newcompute_features.py')
     output_handler(subprocess.check_output([bash_command],stderr=subprocess.STDOUT,shell=True))
     
     print('Completed -quantify step')
