@@ -13,8 +13,6 @@ N-terminal extensions (NTE)
     _x_ nteseqr, identify high likelihood NTEs and filter them from uORFseqr
        
 """
-import datetime
-
 #
 #import multiprocessing
 import re
@@ -80,7 +78,7 @@ def demo():
     
     monolog = ('\tStep 4. NTE candidate file.\n'+
                '\tThe highest scoring alternative translation initiation site (aTIS) for each NTE event\n'+
-               'is output in bed file format as )
+               'is output in bed file format.')
     print(monolog)
 # 
 def test():
@@ -309,11 +307,15 @@ else:
             
 def parse_name(field):
     field = field.strip()
-    
-    if 'PARENT=' in field:
-        field = field.split('PARENT=')[1]
+    if 'ID=' in field:
+        field = field.split('ID=')[1]
+    else:
+        if 'PARENT=' in field:
+            field = field.split('PARENT=')[1]
+            
     if ';' in field:
         field = field.split(';')[0]
+        
     if '_mRNA' in field:
         field = field.split('_mRNA')[0]
         
@@ -394,7 +396,8 @@ def parse_gff(gff_name, gene_tag, tl_tag, tp_tag, min_utr, min_3p, mask_tl, mask
     for remove in remove_set:
         pop = coord_dict.pop(remove)
         if '@' not in remove:
-            outline = ('Removing {} for to short of a UTR: {}').format(remove, pop)
+            print(pop)
+            outline = ('Removing {} for to short of a UTR.').format(remove)
             print(outline)
     
     return(coord_dict, chromosome_set)
@@ -666,7 +669,7 @@ def build_search_region(coord_dict, fasta_dict, dsrl):
             sr_start, sr_stop, sr_seq = find_stop(name, r_start, r_stop, deets[region], sign, region)
 
             search_region_dict[name]['starts'][region] = find_starts(name, chromo, sign, sr_start, sr_stop, sr_seq, region) 
-            
+                        
             if chromo not in assign_region_dict[region]:
                 assign_region_dict[region][chromo]={}
                 
@@ -961,7 +964,7 @@ if __name__ == '__main__':
         #for i in range(len(name_dict)+1):
         jobs = []
         for each_sample, RPF_RNA_pair in name_dict.items():    
-            print('4... ', each_sample, datetime.datetime.now())
+            print('Loading sample: ' + str(each_sample))
             
             RPF_name, RNA_name = RPF_RNA_pair
             
@@ -984,7 +987,9 @@ if __name__ == '__main__':
         print('generating P-site bam files ... ')
         output_bam(args.output_file, sample_bam_dict['header'], sample_bam_dict['psites'])
         
-        resource_pickle_name = ('{}_sample_dict.p').format(args.output_file)    
+        print('Writing data out:')
+        resource_pickle_name = ('{}_sample_dict.p').format(args.output_file)
+        print('\t' + resource_pickle_name)
         with open(resource_pickle_name, 'wb') as file:
             pickle.dump(sample_dict, file)
         
@@ -995,7 +1000,7 @@ if __name__ == '__main__':
         rep_psite_dict = sample_dict['psites']['sr']
         rep_RPF_dict = sample_dict['RPF']['sr']
         rep_RNA_dict = sample_dict['RNA']['sr']
-        
+                
         for atis_id, etc in atis_id_dict.items():
             name = etc['meta']['name']
             sign = etc['meta']['sign']
@@ -1033,12 +1038,15 @@ if __name__ == '__main__':
                                 quantified_search_regions_dict[name][atis_id][atis_region]['psites'][reading_frame] += psite_ct
                                 quantified_search_regions_dict[name][atis_id][atis_region]['RPF'] += rpf_ct
                                 quantified_search_regions_dict[name][atis_id][atis_region]['RNA'] += rna_ct
-                                        
+        
+        print('Writing data out:')                                
         resource_pickle_name = ('{}_quantified_search_regions_dict.p').format(args.output_file)
+        print('\t' + resource_pickle_name)
         with open(resource_pickle_name, 'wb') as file:
             pickle.dump(quantified_search_regions_dict, file)
             
-        resource_pickle_name = ('{}_atis_id_dict.p').format(args.output_file)    
+        resource_pickle_name = ('{}_atis_id_dict.p').format(args.output_file)  
+        print('\t' + resource_pickle_name)
         with open(resource_pickle_name, 'wb') as file:
             pickle.dump(atis_id_dict, file)
         
@@ -1048,15 +1056,19 @@ if __name__ == '__main__':
         sample_dict = {}
         atis_id_dict = {}
         
-        for each_sample in args.sample_list:             
-
+        print('Loading data: ')
+        
+        for each_sample in args.sample_list:
             pickle_out = ('{}_quantified_search_regions_dict.p').format(each_sample)
+            print('\t' + pickle_out)
             quantified_search_regions_dict[each_sample] = pickle.load(open(pickle_out))
 
             pickle_out = ('{}_sample_dict.p').format(each_sample)
+            print('\t' + pickle_out)
             sample_dict[each_sample] = pickle.load(open(pickle_out))
         
             pickle_out = ('{}_atis_id_dict.p').format(each_sample)
+            print('\t' + pickle_out)
             atis_id_dict[each_sample] = pickle.load(open(pickle_out))
              
             for atis_id, _etc in atis_id_dict[each_sample].items():
@@ -1098,7 +1110,7 @@ if __name__ == '__main__':
                                  best_atis = atis_id
                                  best_set = atis_score
                                                             
-            if best_atis != '':                      
+            if best_atis != '':              
                 output_bed(name, best_atis, best_score, atis_id_dict, nte_candidate_file)
                                     
         nte_potential_file.close()

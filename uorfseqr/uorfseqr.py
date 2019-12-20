@@ -133,10 +133,7 @@ parser.add_argument('-rep1',"--replicate_1")
 parser.add_argument('-rep2',"--replicate_2")
 
 ##nteseqr
-#python nteseqr.py -nte -gff saccharomyces_cerevisiae.gff -fa Scer_SacCer3.fa -samples Mix.Scer_r2Normal_RPF.SNP.sorted.bam Mix.Scer_r3Normal_RPF.SNP.sorted.bam
-#python nteseqr.py -nte -gff saccharomyces_cerevisiae.gff -fa Scer_SacCer3.fa -samples starved_r3 Scer_r3Starved_RPF_genome_Aligned.out.bam Scer_r3Starved_mRNA_genome_Aligned.out.bam starved_r2 Scer_r2Starved_RPF_genome_Aligned.out.bam Scer_r2Starved_mRNA_genome_Aligned.out.bam -o AAS > fuck.out
-#python nteseqr.py -nte -gff saccharomyces_cerevisiae.gff -fa Scer_SacCer3.fa -samples starved_r3 Scer_r3Starved_RPF_genome_Aligned.out.sam Scer_r3Starved_mRNA_genome_Aligned.out.sam starved_r2 Scer_r2Starved_RPF_genome_Aligned.out.sam Scer_r2Starved_mRNA_genome_Aligned.out.sam -o AAS > fuck.out
-#python uorfseqr.py -nte -fa data/reference_genomes/Scer_SacCer3.fa -samples Scer_A data/bam/Scer_A_RPF_10.bam data/bam/Scer_A_mRNA_10.bam Scer_B data/bam/Scer_B_RPF_10.bam data/bam/Scer_B_mRNA_10.bam Scer_C data/bam/Scer_C_RPF_10.bam data/bam/Scer_C_mRNA_10.bam -o nte_demo
+#python uorfseqr.py -nte -fa data/reference_genomes/Scer_SacCer3.fa -samples r2 r2_RPF.bam r2_RNA.bam r3 r3_RPF.bam r3_RNA.bam -o nte_demo
 
 parser.add_argument('-nte',"--nte_seqr", action='store_true')
 parser.add_argument('-gt',"--gene_tag")
