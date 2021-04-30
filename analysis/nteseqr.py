@@ -11,6 +11,9 @@ N-terminal extensions (NTE)
 
 12.3.2019 (Concentrate Feed) Implementing improvements for MiMB publication
     _x_ nteseqr, identify high likelihood NTEs and filter them from uORFseqr
+    
+04.28.2021 (Oral Solve)
+    _x_ Removed atis_uid hash 
        
 """
 #
@@ -62,19 +65,39 @@ def demo():
     '\t\tExample:\n\tpython nteseqr.py -load -gff analysis/saccharomyces_cerevisiae.gff -fa data/reference_genomes/Scer_SacCer3.fa -samples Scer_A data/bam/Scer_A_RPF_10.bam data/bam/Scer_A_mRNA_10.bam -o Scer_A_nte\n')
     print(monolog)
     
+    '''
+    python scripts/nteseqr.py -load -gff ensembl_50/saccharomyces_cerevisiae.gff \
+        -fa ensembl_50/Saccharomyces_cerevisiae.R64-1-1.dna.toplevel.fa \
+        -samples DGY1657_R1_nte \
+        /scratch/ps163/STAR_Carolina_03_18_2021/processed/RPF_DGY1657_R1.sorted.bam \
+        /scratch/ps163/STAR_Carolina_03_18_2021/processed/RNA_DGY1657_R1.sorted.bam \
+        -o nte/DGY1657_R1_nte
+    '''
+    
     monolog = ('\tStep 2. -load command loads and assigns reads for replicate 2.\n')
     print(monolog)
     monolog = ('\t\tUsage:\n\tpython nteseqr.py -load -gff <path_to_gff_file> -fa <path to reference fasta file>\n'+
                '\t-sample <sample_name> <path_to_RPF_bam_file> <path_to_RNA_bam_file> -o <output_prefix>'+
     '\t\tExample:\n\tpython nteseqr.py -load -gff analysis/saccharomyces_cerevisiae.gff -fa data/reference_genomes/Scer_SacCer3.fa -samples Scer_B data/bam/Scer_B_RPF_10.bam data/bam/Scer_B_mRNA_10.bam -o Scer_B_nte\n')
     print(monolog)
-
+    '''
+    python scripts/nteseqr.py -load -gff ensembl_50/saccharomyces_cerevisiae.gff \
+        -fa ensembl_50/Saccharomyces_cerevisiae.R64-1-1.dna.toplevel.fa \
+        -samples DGY1657_R2_nte \
+        /scratch/ps163/STAR_Carolina_03_18_2021/processed/RPF_DGY1657_R2.sorted.bam \
+        /scratch/ps163/STAR_Carolina_03_18_2021/processed/RNA_DGY1657_R2.sorted.bam \
+        -o nte/DGY1657_R2_nte
+    '''
     monolog = ('\tStep 3. -eval command generates candidate uORFs using the previouslt loaded samples.\n'+
                'Note that the -samples values here are the output (-o) from the previous two steps.\n')
     print(monolog)
     monolog = ('\t\tUsage:\n\tpython nteseqr.py -eval -samples <name_of_sample_1> <name_of_sample_2> -o <output_prefix>\n'+
     '\t\tExample:\n\tpython nteseqr.py -eval -samples Scer_A_nte Scer_B_nte -o scer.demo/combined\n')
     print(monolog)
+    
+    '''
+    python scripts/nteseqr.py -eval -samples nte/DGY1657_R1_nte nte/DGY1657_R2_nte -o nte/DG1657_nte
+    '''
     
     monolog = ('\tStep 4. NTE candidate file.\n'+
                '\tThe highest scoring alternative translation initiation site (aTIS) for each NTE event\n'+
@@ -153,10 +176,7 @@ complement = {'A':'T','G':'C','T':'A','C':'G'}
 ###
 if args.manual:
     help_dialog()
-    
-#if args.demo:
-#    demo()
-    
+        
 if args.test:
     test()
 
@@ -340,6 +360,9 @@ def parse_gff(gff_name, gene_tag, tl_tag, tp_tag, min_utr, min_3p, mask_tl, mask
             sign = line.split('\t')[6]   
             
             if chromo not in chromosome_set:
+                if 'chr' in chromo:
+                    chromo = chromo.split('chr')[1]
+                    
                 chromosome_set.add(chromo)
             
             if name not in coord_dict:
@@ -350,7 +373,6 @@ def parse_gff(gff_name, gene_tag, tl_tag, tp_tag, min_utr, min_3p, mask_tl, mask
             
             if region == gene_tag:
                 coord_dict[name]['gene'] = (start, stop)
-            
             
             if region == tl_tag:
                 if abs(stop - start) > min_utr:
@@ -386,7 +408,6 @@ def parse_gff(gff_name, gene_tag, tl_tag, tp_tag, min_utr, min_3p, mask_tl, mask
     
     for name, region_dict in coord_dict.items():
         if not region_dict['gene']:
-            #TODO improve readout
             remove_set.add(name)
         else:
             for each_region in ['tl','tp']:
@@ -394,9 +415,8 @@ def parse_gff(gff_name, gene_tag, tl_tag, tp_tag, min_utr, min_3p, mask_tl, mask
                     remove_set.add(name)
     
     for remove in remove_set:
-        pop = coord_dict.pop(remove)
+        _pop = coord_dict.pop(remove)
         if '@' not in remove:
-            print(pop)
             outline = ('Removing {} for to short of a UTR.').format(remove)
             print(outline)
     
@@ -560,8 +580,8 @@ def find_starts(name, chromo, sign, start, stop, tl_list, runmode):
                 for codon in tl_list[triplet_step:]:
                     sr_seq += codon
                                     
-                hash_line = ('{}_{}_{}_{}').format(name, triplet, triplet_step, runmode)
-                atis_id = hash(hash_line)
+                atis_id = ('{}_{}_{}_{}').format(name, triplet, triplet_step, runmode)
+                #atis_id = hash(hash_line)
                 start_coords = {'atis':{},'sr':{}, 'up':{}, 'gene':[coord_dict[name]['gene'][0],coord_dict[name]['gene'][1]], 'meta':{'name':name, 'chromo':chromo, 'sign': sign, 'region':runmode, 'seq':sr_seq, 'triplet':triplet}, 'full': (start+1, stop)}
                 
                 #calc aTIS
@@ -596,8 +616,8 @@ def find_starts(name, chromo, sign, start, stop, tl_list, runmode):
                 for codon in tl_list[triplet_step:]:
                     sr_seq += codon
                     
-                hash_line = ('{}_{}_{}_{}').format(name, triplet, triplet_step, runmode)
-                atis_id = hash(hash_line)
+                atis_id = ('{}_{}_{}_{}').format(name, triplet, triplet_step, runmode)
+                #atis_id = hash(hash_line)
                 start_coords = {'atis':{},'sr':{}, 'up':{}, 'gene':[coord_dict[name]['gene'][0],coord_dict[name]['gene'][1]], 'meta':{'name':name, 'chromo':chromo, 'sign': sign, 'region':runmode, 'seq':sr_seq, 'triplet':triplet}, 'full': (start+1, stop)}
                 
                 #calc atis
@@ -768,8 +788,8 @@ def assign_reads(uid, chromo, start, stop, sign, runmode):
     
 def load_reads(convert_name, chromosome_set, search_region_dict, assign_region_dict, flanking_region_dict, runmode):
     global sample_bam_dict
+ 
     #TODO: Future version - Basic version only extracts 28M reads, make this better
-
     sam_file = open(convert_name)
     
     ct = 0
@@ -784,6 +804,9 @@ def load_reads(convert_name, chromosome_set, search_region_dict, assign_region_d
             ct += 1
             cigar = line.split('\t')[5]
             chromo = line.split('\t')[2]
+            
+            if 'chr' in chromo:
+                chromo = chromo.split('chr')[1]
             
             if chromo in chromosome_set:
                 uid = line.split('\t')[0]+'~'+str(ct)
@@ -800,10 +823,11 @@ def load_reads(convert_name, chromosome_set, search_region_dict, assign_region_d
 
                 new_hits = assign_reads(uid, chromo, start, stop, sign, runmode)
                 hit_ct += new_hits
+                
                 if new_hits > 0:    
                     sample_bam_dict[runmode][uid] = line
                 
-                if '28M' in cigar and runmode == 'RPF':                    
+                if '28M' in cigar and runmode == 'RPF':
                     if chromo in chromosome_set:
                         if process:                           
                             if sign == '-':
@@ -867,7 +891,6 @@ def output_bed(name, atis_id, tis_scores, atis_sample_dict, outputfile):
                         
             if name != check_name:
                 print('atis name disagreement', name, check_name, atis_id)
-                1/0
             
             else:
                 outline = ('{chromo}\t{start}\t{stop}\t{name}_{triplet}_{seq}_nte\t{score}\t{sign}\n').format(chromo=chromo, start=start, stop=stop, name=name, seq=seq, triplet=triplet, score=score, sign=sign)
@@ -881,33 +904,32 @@ def parse_samples(sample_list):
     
     if sample_list:
         if len(sample_list)%3!= 0:
-            print('Each sample requires a Name, RPF bam file, and RNA bam file.')
+            print('Error: each sample requires a Name, RPF bam file, and RNA bam file.')
         else:
             for i in range(int(len(sample_list)/3)):
                 name_dict[sample_list[i*3]]=[sample_list[(i*3)+1], sample_list[(i*3)+2]]
                 
     return(name_dict)
     
-def eval_atis(atis_id):
+def eval_atis(atis_id, athird):
     global atis_id_dict
     global score_dict
     global eval_atis_dict
     global quantified_search_regions_dict
     
     process_ct = 0
-    
+     
     for each_sample in args.sample_list:
         if atis_id in atis_id_dict[each_sample]:
             if atis_id_dict[each_sample][atis_id]['meta']['region'] == 'tl':
                 name = atis_id_dict[each_sample][atis_id]['meta']['name']
-
                 if name in quantified_search_regions_dict[each_sample]:
+                    print(quantified_search_regions_dict[each_sample][name].keys())
                     if atis_id in quantified_search_regions_dict[each_sample][name]:
                         if quantified_search_regions_dict[each_sample][name][atis_id]['sr']['psites'][0] >= minimum_reads:
-                            process_ct += 1
+                            process_ct += 1               
                             
                         if (process_ct/float(len(args.sample_list)) > 0.5) and process_ct >= 2:
-                                                    
                             for each_sample in args.sample_list:                                
                                 atis_details = quantified_search_regions_dict[each_sample][name][atis_id]
                                 
@@ -921,7 +943,6 @@ def eval_atis(atis_id):
                                 eval_atis_dict[atis_id]['pval'].append(stats.binom_test([atis_details['sr']['psites'][0], atis_details['sr']['psites'][1] + atis_details['sr']['psites'][2]], p=athird))
 
                             if np.median(eval_atis_dict[atis_id]['pval']) <= 0.05 and ((atis_details['sr']['psites'][0] >= atis_details['sr']['psites'][1]) and (atis_details['sr']['psites'][0] >= atis_details['sr']['psites'][2])):
-                                
                                 output_bed(name, atis_id, eval_atis_dict[atis_id]['tis_score'], atis_id_dict, nte_potential_file)
                                 
                                 if name not in score_dict:
@@ -943,7 +964,7 @@ if __name__ == '__main__':
     if args.load_reads:
         print('Starting nteseq ... ')
         name_dict = parse_samples(args.sample_list)
-        
+
         #2 parse fasta
         print('Parsing fasta file... ')
         fasta_dict = parse_fasta(args.fa_file)
@@ -970,7 +991,7 @@ if __name__ == '__main__':
             
             convert_rpf_name = convert_to_sam(RPF_name)
             convert_rna_name = convert_to_sam(RNA_name)
-        
+
             load_reads(convert_rpf_name, chromosome_set, search_region_dict, assign_region_dict, flanking_region_dict, 'RPF')
             load_reads(convert_rna_name, chromosome_set, search_region_dict, assign_region_dict, flanking_region_dict, 'RNA')
             
@@ -1061,15 +1082,15 @@ if __name__ == '__main__':
         for each_sample in args.sample_list:
             pickle_out = ('{}_quantified_search_regions_dict.p').format(each_sample)
             print('\t' + pickle_out)
-            quantified_search_regions_dict[each_sample] = pickle.load(open(pickle_out))
+            quantified_search_regions_dict[each_sample] = pickle.load(open(pickle_out, 'rb'))
 
             pickle_out = ('{}_sample_dict.p').format(each_sample)
             print('\t' + pickle_out)
-            sample_dict[each_sample] = pickle.load(open(pickle_out))
+            sample_dict[each_sample] = pickle.load(open(pickle_out, 'rb'))
         
             pickle_out = ('{}_atis_id_dict.p').format(each_sample)
             print('\t' + pickle_out)
-            atis_id_dict[each_sample] = pickle.load(open(pickle_out))
+            atis_id_dict[each_sample] = pickle.load(open(pickle_out, 'rb'))
              
             for atis_id, _etc in atis_id_dict[each_sample].items():
                 union_set.add(atis_id)
@@ -1088,7 +1109,7 @@ if __name__ == '__main__':
         print('Evaluating candidate NTE events... ')
         
         for atis_id in union_set:
-            eval_atis(atis_id)
+            eval_atis(atis_id, athird)
                         
         for name, atis_scores in score_dict.items():
             best_score = 0
@@ -1115,3 +1136,5 @@ if __name__ == '__main__':
                                     
         nte_potential_file.close()
         nte_candidate_file.close()
+        
+        print('Completed evaluation of candidate NTE events results saved in ', nte_candidate_file_name)
